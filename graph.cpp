@@ -18,8 +18,8 @@ class CSR_graph {
         std::vector<edge> connect; // edge consists of source, destination, and weight
 };
 
-void read_file() { // we need to read from the file
-    std::ifstream file ("rmat15.dimacs");
+void read_file(string choice) { // we need to read from the file
+    std::ifstream file (choice);
     // if file is opened close it
     CSR_graph fin; // only one graph needed
 
@@ -105,8 +105,19 @@ void read_file() { // we need to read from the file
 // }
 
 
-int main () {
-    read_file();
+int main (int argc, char* argv[]) {
+
+    string text_con[] = {"rmat15.dimacs", "road-NY.dimacs", "wiki.dimacs"};
+
+    int choice;
+
+    while(choice != 1 || choice != 2 || choice != 3) {
+        cout << "Choose Between: rmat15 == 1, road_ny == 2 or wiki == 3 : ";
+
+        cin >> choice;
+    }
+
+    read_file(text_con[choice - 1]);
 }
 
 
