@@ -127,8 +127,7 @@ public:
         sort(edges.begin(), edges.end(),
              [](const Edge &e1, const Edge &e2)
              {
-                 return (e1.src < e2.src) ? true : (e1.src == e2.src) ? (e1.dst < e2.dst)
-                                                                      : false;
+                 return (e1.src < e2.src) ? true : (e1.src == e2.src) ? (e1.dst < e2.dst) : false;
              });
 
         // handle duplicate in the edges
@@ -366,12 +365,12 @@ void sort_and_print_label(CsrGraph *g, string out_file)
 
 int main(int argc, char *argv[])
 {
-    // Ex: ./pagerank road-NY.dimacs road-NY.txt
-    if (argc < 3)
-    {
-        cerr << "Usage: " << argv[0] << " <input.dimacs> <output_filename>\n";
-        return 0;
-    }
+    // // Ex: ./pagerank road-NY.dimacs road-NY.txt
+    // if (argc < 3)
+    // {
+    //     cerr << "Usage: " << argv[0] << " <input.dimacs> <output_filename>\n";
+    //     return 0;
+    // }
 
     // make sure the input argument is valid
     ifstream f_dimacs(argv[1]);
