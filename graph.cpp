@@ -113,7 +113,9 @@ void handle_dups(graph *fin) {
             current_edge = next_edge;
         }
     }
+
     non_dups.push_back(current_edge);
+    fin->connect = non_dups;
 
     handle_arrays(non_dups, fin);
 }
@@ -276,6 +278,9 @@ int main (int argc, char* argv[]) {
     // routine 1A: reads a graph in DIMACS format from a file and constructs a Compressed-Sparse-Row
     read_file(input_file, g);
 
+    // for (int i = 0; i < g->connect.size(); i++) {
+    //         cout << g->connect[i].sourceNode << " " << g->connect[i].destNode << " " << g->connect[i].weight << "\n";
+    //     }
     // routine 1B:  a graph in CSR representation in memory and prints it out to a file in DIMACS format.
     // string output_file = "CSR_DIMACS_" + input_file;
     // writeGraphToDIMACS(g, output_file);
@@ -285,12 +290,12 @@ int main (int argc, char* argv[]) {
     // writeNodesToFile(g, out);
 
     // routine 2A: Write a push-style page-rank algorithm that operates on a graph stored in CSR format in memory
-    pagerank(g);
+    // pagerank(g);
 
-    string output = "pagerank_" + input_file;
-    //1C but for pagerank.
-    std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
-    print_pairs(pairs_pagerank, output);
+    // string output = "pagerank_" + input_file;
+    // //1C but for pagerank.
+    // std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
+    // print_pairs(pairs_pagerank, output);
 
     // deletes the graph.
     delete g;
