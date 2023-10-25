@@ -267,6 +267,7 @@ int main (int argc, char* argv[]) {
     print_pairs(pairs);
 
     // cout << "new value 1 \n";
+    delete g;
 
     return 0;
 }
