@@ -155,6 +155,12 @@ public:
         // deal with the last edge
         good_edges.push_back(Edge(edges[edge_size - 1].src, edges[edge_size - 1].dst, max_weight));
 
+        // cout << " for non dups \n";
+        // for (const Edge &good : good_edges)
+        // {
+        //     cout << good.src << " " << good.dst << " " << good.weight << "\n";
+        // }
+
         // get the actual number of edges
         num_edges = good_edges.size();
 
@@ -198,6 +204,10 @@ public:
         }
         ci[num_edges + 1] = num_nodes + 1;
         ai[num_edges + 1] = 0;
+
+        for(int i = 0; i < num_edges + 1; i++) {
+            cout << ai[i] << " " << ci[i] << " " << rp[i] << "\n";
+        }
     }
 
     int node_size()
@@ -373,7 +383,7 @@ int main(int argc, char *argv[])
     // }
 
     // make sure the input argument is valid
-    ifstream f_dimacs(argv[1]);
+    ifstream f_dimacs("wiki.dimacs");
     if (!f_dimacs)
     {
         cerr << "Failed to open " << argv[1] << endl;
@@ -391,7 +401,7 @@ int main(int argc, char *argv[])
     compute_pagerank(g, threshold, damping);
 
     // sort and print the labels to the output file
-    sort_and_print_label(g, argv[2]);
+    sort_and_print_label(g, "solution_output.txt");
 
     // delete the allocated space to the graph avoid memory leak
     delete g;

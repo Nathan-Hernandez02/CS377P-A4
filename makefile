@@ -1,5 +1,3 @@
-# This is a comment
-
 # Compiler and compiler flags
 CXX = g++
 CXXFLAGS = -Wall -std=c++11
