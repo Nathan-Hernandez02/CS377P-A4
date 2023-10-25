@@ -24,17 +24,6 @@ struct edge { // single edge must have a source, weight, and dest
     }
 };
 
-struct PairHash
-{
-    template <class T1, class T2>
-    std::size_t operator()(const std::pair<T1, T2> &p) const
-    {
-        auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second);
-        return h1 ^ h2;
-    }
-};
-
 class graph {
     public:
         int nums_nodes; // total nodes
@@ -123,39 +112,37 @@ void sort_graph(graph *fin)
 
 void handle_dups(graph *fin)
 {
-    vector<edge> non_dups;
-    unordered_map<pair<int, int>, int, PairHash> edgeMap; // Use the custom hasher
-
-    for (const edge &curEdge : fin->connect)
+    vector<edge> edges = fin->connect;
+    vector<edge> good_edges;
+    int edge_size = edges.size();
+    
+    int max_weight = edges[0].weight;
+    for (int i = 1; i < edge_size; i++)
     {
-        pair<int, int> edgeKey(curEdge.sourceNode, curEdge.destNode);
-        if (edgeMap.find(edgeKey) != edgeMap.end())
+        if (edges[i].sourceNode == edges[i - 1].sourceNode && edges[i].destNode == edges[i - 1].destNode)
         {
-            // Edge already exists, update the weight if needed
-            edgeMap[edgeKey] = max(edgeMap[edgeKey], curEdge.weight);
+            // duplicate edge
+            max_weight = edges[i].weight > max_weight ? edges[i].weight : max_weight;
         }
         else
         {
-            // Not a duplicate, add it to the map
-            edgeMap[edgeKey] = curEdge.weight;
+            // add the edge with max_weight to good_edges
+            good_edges.push_back(edge(edges[i - 1].sourceNode, edges[i - 1].destNode, max_weight));
+
+            // initialize max_weight
+            max_weight = edges[i].weight;
         }
     }
-
-    for (const auto &entry : edgeMap)
+    // deal with the last edge
+    good_edges.push_back(edge(edges[edge_size - 1].sourceNode, edges[edge_size - 1].destNode, max_weight));
+    
+    cout << " for non dups \n";
+    for (const edge &good_Edge : good_edges)
     {
-        int sourceNode = entry.first.first;
-        int destNode = entry.first.second;
-        int weight = entry.second;
-        non_dups.push_back(edge(sourceNode, destNode, weight));
+        cout << good_Edge.sourceNode << " " << good_Edge.destNode << " " << good_Edge.weight << "\n";
     }
 
-    // cout << " for non dups \n";
-    // for (const edge &nonDupEdge : non_dups)
-    // {
-    //     cout << nonDupEdge.sourceNode << " " << nonDupEdge.destNode << " " << nonDupEdge.weight << "\n";
-    // }
-
-    handle_arrays(non_dups, fin);
+    handle_arrays(good_edges, fin);
 }
 
 //
@@ -183,6 +170,131 @@ void read_file(string choice, graph *fin) {
     }
 }
 
+void set_nodes(graph *graph, int num_nodes, double damping)
+{
+    for (int i = 0; i < num_nodes; i++)
+    {
+        double damp = damping * graph->graph_node[i].node_label[0];
+        double rp_arr = graph->rp[i + 1] - graph->rp[i];
+
+        double converge_equation = damp / rp_arr;
+
+        for (int k = graph->rp[i]; k < graph->rp[i + 1]; k++)
+        {
+            int get_dst = graph->ci[k];
+            graph->graph_node[get_dst].node_label[1] = graph->graph_node[get_dst].node_label[1] + converge_equation;
+        }
+    }
+}
+
+void pagerank(graph *graph)
+{
+    // from slides and assignment page.
+    double convergence = 1.0e-4;
+    double damping = 0.85;
+
+    int num_nodes = graph->nums_nodes;
+    // int num_edges = graph.nums_edges;
+    vector<edge> current = graph->connect;
+
+    bool is_converged = false;
+    bool first_time = true;
+
+    // sets current label
+    for (int i = 1; i < num_nodes; i++)
+    {
+        graph->graph_node[i].node_label[0] = 1 / num_nodes;
+    }
+
+    while (!is_converged || first_time)
+    {
+
+        // sets next level
+        for (int n = 1; n <= num_nodes; n++)
+        {
+            graph->graph_node[n].node_label[1] = (1.0 - damping) / (double)num_nodes;
+        }
+
+        set_nodes(graph, num_nodes, damping);
+
+        for (int c = 1; c <= num_nodes; c++)
+        {
+            double cur = graph->graph_node[c].node_label[0];
+            double next = graph->graph_node[c].node_label[1];
+
+            if (fabs(next - cur) > convergence)
+            {
+                is_converged = false;
+            }
+
+            if (c == num_nodes)
+            {
+                is_converged = true;
+            }
+        }
+
+        for (int l = 1; l <= num_nodes; l++)
+        {
+            graph->graph_node[l].node_label[0] = graph->graph_node[l].node_label[1];
+        }
+
+        double sum = 0.0;
+
+        for (int i = 1; i <= num_nodes; i++)
+        {
+            sum += graph->graph_node[i].node_label[0];
+        }
+        for (int j = 1; j <= num_nodes; j++)
+        {
+            graph->graph_node[j].node_label[0] = graph->graph_node[j].node_label[0] / sum;
+        }
+
+        first_time = false;
+    }
+}
+
+bool compare_pair(const std::pair<int, double> &v1, const std::pair<int, double> &v2)
+{
+    if (v1.second > v2.second)
+    {
+        return true;
+    }
+    else if (v1.second == v2.second)
+    {
+        return v1.first < v2.first;
+    }
+    return false;
+}
+
+std::vector<std::pair<int, double>> pair_sort(graph *graph)
+{
+    std::vector<std::pair<int, double>> pairs;
+
+    for (int i = 1; i <= graph->nums_nodes; i++)
+    {
+        pairs.push_back(std::make_pair(i, graph->graph_node[i].node_label[0]));
+    }
+
+    std::sort(pairs.begin(), pairs.end(), compare_pair);
+
+    return pairs;
+}
+
+void print_pairs(std::vector<std::pair<int, double>> &pairs)
+{
+    ofstream out_stream("output.txt");
+    for (const auto &pair : pairs)
+    {
+        out_stream << pair.first << " " << fixed << setprecision(6) << pair.second << endl;
+    }
+
+    // ofstream out_stream(out_file);
+    // for (const pair<int, double> &v : label)
+    // {
+    //     out_stream << v.first << " " << fixed << setprecision(6) << v.second << endl;
+    // }
+}
+
 int main (int argc, char* argv[]) {
 
     string text_con[] = {"rmat15.dimacs", "road-NY.dimacs", "wiki.dimacs"}; // wiki.dimacs
@@ -199,5 +311,11 @@ int main (int argc, char* argv[]) {
 
     // enters the data into graph
     read_file(text_con[choice - 1], g);
+
+    pagerank(g);
+
+    std::vector<std::pair<int, double>> pairs = pair_sort(g);
+
+    print_pairs(pairs);
 
 }
