@@ -121,7 +121,7 @@ void sort_graph(graph *fin)
     sort(fin->connect.begin(), fin->connect.end(), compare_edge);
 }
 
-vector<edge> handle_dups(graph *fin)
+void handle_dups(graph *fin)
 {
     vector<edge> non_dups;
     unordered_map<pair<int, int>, int, PairHash> edgeMap; // Use the custom hasher
@@ -156,8 +156,6 @@ vector<edge> handle_dups(graph *fin)
     // }
 
     handle_arrays(non_dups, fin);
-
-    return non_dups;
 }
 
 //
@@ -181,7 +179,7 @@ void read_file(string choice, graph *fin) {
             }
         }
         sort_graph(fin);
-        fin->connect = handle_dups(fin);
+        handle_dups(fin);
     }
 }
 
@@ -203,11 +201,3 @@ int main (int argc, char* argv[]) {
     read_file(text_con[choice - 1], g);
 
 }
-
-// cout << " for non dups \n";
-// std::vector<edge>::size_type x = 0;
-// while (x < non_dups.size())
-// {
-//     cout << non_dups[x].sourceNode << " " << non_dups[x].destNode << " " << non_dups[x].weight << "\n";
-//     x++;
-// }
