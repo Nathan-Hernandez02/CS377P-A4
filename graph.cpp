@@ -95,9 +95,14 @@ void handle_arrays(vector<edge> non_dups, graph *fin)
 
     fin->ai[fin_edges] = 0;
     fin->ci[fin_edges] = fin_nodes;
+
+    for (int i = 0; i < num_edges + 1; i++)
+    {
+        cout << fin->ai[i] << " " << fin->ci[i] << " " << fin->rp[i] << "\n";
+    }
 }
 
-bool compare_edge(const edge &e1, const edge &e2)
+bool compare_edges(const edge &e1, const edge &e2)
 {
     if (e1.sourceNode != e2.sourceNode) {
         return e1.sourceNode < e2.sourceNode;
@@ -105,42 +110,43 @@ bool compare_edge(const edge &e1, const edge &e2)
     return e1.destNode < e2.destNode;
 }
 
-void sort_graph(graph *fin)
-{
-    sort(fin->connect.begin(), fin->connect.end(), compare_edge);
-}
 
+// @TO:DO chnage style of this method!!!!!
+///////////////////////////////////////////////////////////////////////////////////
 void handle_dups(graph *fin)
 {
     vector<edge> edges = fin->connect;
     vector<edge> good_edges;
     int edge_size = edges.size();
-    
+
+    // Sort the edges by source and destination nodes
+    sort(edges.begin(), edges.end(), compare_edges);
+
     int max_weight = edges[0].weight;
+
     for (int i = 1; i < edge_size; i++)
     {
         if (edges[i].sourceNode == edges[i - 1].sourceNode && edges[i].destNode == edges[i - 1].destNode)
         {
-            // duplicate edge
-            max_weight = edges[i].weight > max_weight ? edges[i].weight : max_weight;
+            // Duplicate edge
+            max_weight = max(max_weight, edges[i].weight);
         }
         else
         {
-            // add the edge with max_weight to good_edges
+            // Add the edge with max_weight to good_edges
             good_edges.push_back(edge(edges[i - 1].sourceNode, edges[i - 1].destNode, max_weight));
-
-            // initialize max_weight
             max_weight = edges[i].weight;
         }
     }
-    // deal with the last edge
+
+    // Deal with the last edge
     good_edges.push_back(edge(edges[edge_size - 1].sourceNode, edges[edge_size - 1].destNode, max_weight));
-    
-    cout << " for non dups \n";
-    for (const edge &good_Edge : good_edges)
-    {
-        cout << good_Edge.sourceNode << " " << good_Edge.destNode << " " << good_Edge.weight << "\n";
-    }
+
+    // cout << "For non-duplicates:\n";
+    // for (const edge &good_edge : good_edges)
+    // {
+    //     cout << good_edge.sourceNode << " " << good_edge.destNode << " " << good_edge.weight << "\n";
+    // }
 
     handle_arrays(good_edges, fin);
 }
@@ -165,7 +171,7 @@ void read_file(string choice, graph *fin) {
                 fin->connect.push_back(curEdge);
             }
         }
-        sort_graph(fin);
+        sort(fin->connect.begin(), fin->connect.end(), compare_edges);
         handle_dups(fin);
     }
 }
