@@ -1,0 +1,11 @@
+Node 0 has 0 outgoing edges.
+Node 1 has 0 outgoing edges.
+Node 2 has 1 outgoing edges.
+Node 3 has 1 outgoing edges.
+Node 4 has 2 outgoing edges.
+Node 5 has 3 outgoing edges.
+Node 6 has 2 outgoing edges.
+Node 7 has 2 outgoing edges.
+Node 8 has 2 outgoing edges.
+Node 9 has 2 outgoing edges.
+Node 10 has 1 outgoing edges.

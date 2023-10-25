@@ -47,6 +47,21 @@ class graph {
             delete[] graph_node;
         }
     }
+
+    void computeOutgoingEdgesHistogram(std::vector<int> &histogram)
+    {
+        // Initialize the histogram to all zeros
+        histogram.assign(nums_nodes, 0);
+
+        // Traverse the CSR representation and count outgoing edges for each node
+        for (int node = 0; node < nums_nodes; ++node)
+        {
+            int start = rp[node];
+            int end = rp[node + 1];
+            int numOutgoingEdges = end - start;
+            histogram[node] = numOutgoingEdges;
+        }
+    }
 };
 
 void handle_arrays(vector<edge> non_dups, graph *fin)
@@ -240,24 +255,33 @@ void print_pairs(std::vector<std::pair<int, double>> &pairs, string out)
     }
 }
 
-// void writeGraphToDIMACS(graph * g, const string &fileName){
-//     ofstream outFile(fileName);
+void print_histo(std::vector<int> outgoingEdgesHistogram, string out, graph * g)
+{
+    ofstream outstream(out);
+    for (int node = 0; node < g->nums_nodes; ++node)
+    {
+        outstream << "Node " << node << " has " << outgoingEdgesHistogram[node] << " outgoing edges." << std::endl;
+    }
+}
 
-//     if (!outFile.is_open())
-//     {
-//         cerr << "Error: Unable to open the output file." << endl;
-//         return;
-//     }
+void writeGraphToDIMACS(graph * g, const string &fileName){
+    ofstream outFile(fileName);
 
-//     outFile << "p sp " << g->nums_nodes << " " << g->nums_edges << endl;
+    if (!outFile.is_open())
+    {
+        cerr << "Error: Unable to open the output file." << endl;
+        return;
+    }
 
-//     for (const edge &e : g->connect)
-//     {
-//         outFile << "a " << e.sourceNode << " " << e.destNode << " " << e.weight << endl;
-//     }
+    outFile << "p sp " << g->nums_nodes << " " << g->nums_edges << endl;
 
-//     outFile.close();
-// }
+    for (const edge &e : g->connect)
+    {
+        outFile << "a " << e.sourceNode << " " << e.destNode << " " << e.weight << endl;
+    }
+
+    outFile.close();
+}
 
 int main (int argc, char* argv[]) {
 
@@ -282,20 +306,26 @@ int main (int argc, char* argv[]) {
     //         cout << g->connect[i].sourceNode << " " << g->connect[i].destNode << " " << g->connect[i].weight << "\n";
     //     }
     // routine 1B:  a graph in CSR representation in memory and prints it out to a file in DIMACS format.
-    // string output_file = "CSR_DIMACS_" + input_file;
-    // writeGraphToDIMACS(g, output_file);
+    string output_file = "CSR_DIMACS_" + input_file;
+    writeGraphToDIMACS(g, output_file);
 
     // string out = "CSR_Nodes_" + input_file;
     // // Routine 1C: Graph in CSR representation in memory, and prints node numbers and node labels
     // writeNodesToFile(g, out);
 
     // routine 2A: Write a push-style page-rank algorithm that operates on a graph stored in CSR format in memory
-    // pagerank(g);
+    pagerank(g);
 
-    // string output = "pagerank_" + input_file;
+    string output = "pagerank_" + input_file;
     // //1C but for pagerank.
-    // std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
-    // print_pairs(pairs_pagerank, output);
+    std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
+    print_pairs(pairs_pagerank, output);
+
+    std::vector<int> outgoingEdgesHistogram;
+    output = "histo_" + input_file + ".txt";
+    g->computeOutgoingEdgesHistogram(outgoingEdgesHistogram);
+
+    print_histo(outgoingEdgesHistogram, output, g);
 
     // deletes the graph.
     delete g;
