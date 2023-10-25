@@ -12,7 +12,7 @@ struct node
         double node_label[2];
     };
 
-struct edge { // single edge must have a source, weight, and dest
+struct edge {
     int sourceNode;
     int destNode;
     int weight;
@@ -59,7 +59,6 @@ void handle_arrays(vector<edge> non_dups, graph *fin)
     fin->ci = new int[num_edges + 2];
     fin->ai = new int[num_edges + 2];
 
-    // rp[0] = 1 to be consistent with rp[1] = 1 (This affects the number of edges we get for node 1)
     fin->rp[0] = 1;
     fin->ci[0] = 0;
     fin->ai[0] = 0;
@@ -192,7 +191,6 @@ void pagerank(graph *g)
         }
     }
 
-    // scale the sum to 1
     double sum = 0.0;
     int nodes = g->nums_nodes;
     for (int n = 1; n <= nodes; n++) {
@@ -231,18 +229,37 @@ std::vector<std::pair<int, double>> pair_sort(graph *graph)
     return pairs;
 }
 
-void print_pairs(std::vector<std::pair<int, double>> &pairs)
+void print_pairs(std::vector<std::pair<int, double>> &pairs, string out)
 {
-    ofstream out_stream("output.txt");
+    ofstream out_stream(out);
     for (const auto &pair : pairs)
     {
-        out_stream << pair.first << " " << fixed << setprecision(6) << pair.second << endl;
+        out_stream << "Node: " << pair.first << " " << fixed << setprecision(6) << "Label: " << pair.second << endl;
     }
 }
 
+// void writeGraphToDIMACS(graph * g, const string &fileName){
+//     ofstream outFile(fileName);
+
+//     if (!outFile.is_open())
+//     {
+//         cerr << "Error: Unable to open the output file." << endl;
+//         return;
+//     }
+
+//     outFile << "p sp " << g->nums_nodes << " " << g->nums_edges << endl;
+
+//     for (const edge &e : g->connect)
+//     {
+//         outFile << "a " << e.sourceNode << " " << e.destNode << " " << e.weight << endl;
+//     }
+
+//     outFile.close();
+// }
+
 int main (int argc, char* argv[]) {
 
-    string text_con[] = {"rmat15.dimacs", "road-NY.dimacs", "wiki.dimacs"}; // wiki.dimacs
+    string text_con[] = {"rmat15.dimacs", "road-NY.dimacs", "wiki.dimacs"};
 
     int choice = 0;
 
@@ -254,19 +271,28 @@ int main (int argc, char* argv[]) {
 
     graph * g = new graph();
 
-    // enters the data into graph
-    read_file(text_con[choice - 1], g);
+    string input_file = text_con[choice - 1];
 
-    // performs page rank
+    // routine 1A: reads a graph in DIMACS format from a file and constructs a Compressed-Sparse-Row
+    read_file(input_file, g);
+
+    // routine 1B:  a graph in CSR representation in memory and prints it out to a file in DIMACS format.
+    // string output_file = "CSR_DIMACS_" + input_file;
+    // writeGraphToDIMACS(g, output_file);
+
+    // string out = "CSR_Nodes_" + input_file;
+    // // Routine 1C: Graph in CSR representation in memory, and prints node numbers and node labels
+    // writeNodesToFile(g, out);
+
+    // routine 2A: Write a push-style page-rank algorithm that operates on a graph stored in CSR format in memory
     pagerank(g);
 
-    // sorts
-    std::vector<std::pair<int, double>> pairs = pair_sort(g);
+    string output = "pagerank_" + input_file;
+    //1C but for pagerank.
+    std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
+    print_pairs(pairs_pagerank, output);
 
-    // prints
-    print_pairs(pairs);
-
-    // cout << "new value 1 \n";
+    // deletes the graph.
     delete g;
 
     return 0;
