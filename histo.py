@@ -6,7 +6,7 @@ my_nums = []
 def readDIMACSFile(filename):
     global my_list
     global my_nums
-    G = nx.Graph()
+    graph = nx.Graph()
     with open(filename, 'r') as file:
         for line in file:
             line = line.strip()
@@ -17,14 +17,11 @@ def readDIMACSFile(filename):
                 _, _, numVertices, numEdges = line.split()
                 my_list = [0 for i in range(int(numVertices))] 
                 my_nums = [i for i in range(int(numVertices))] 
-                # You can process 'numVertices' and 'numEdges' as needed.
             elif line.startswith('a'):
                 _, nodeA, nodeB, _ = line.split()
                 G.add_edge(int(nodeA), int(nodeB))
                 my_list[int(nodeA) - 1] =  my_list[int(nodeA) - 1] + 1
-                # For an undirected graph, you may also need to add the reverse edge:
-                # G.add_edge(int(nodeB), int(nodeA))
-    return G
+    return graph
 
 # Function to read weights from a separate file
 def readWeightsFile(filename):
@@ -37,12 +34,9 @@ def readWeightsFile(filename):
 
 # Function to visualize the graph with node sizes based on weights
 def visualizeGraph(graph, node_weights, weights_filename):
-    pos = nx.planar_layout(graph)  # You can use different layouts here
-
-    # Scale the node sizes based on weights
+    pos = nx.random_layout(graph)
     scaled_sizes = [50000 * node_weights[node] for node in graph.nodes]
     node_colors = [node_weights[node]  for node in graph.nodes]
-    # node_cmap = plt.cm.viridis
     node_labels = {}
     with open(weights_filename, "r") as file:
         for line in file:
@@ -56,16 +50,6 @@ def visualizeGraph(graph, node_weights, weights_filename):
     plt.title(f'Graph Visualization with Node Sizes Based on Weights')
     plt.show()
 
-# Function to create a histogram of out-degrees
-def createOutDegreeHistogram():
-    global my_list
-    global my_nums
-    plt.bar(my_nums, my_list, label="data")
-    plt.xlabel('Vertex')
-    plt.ylabel('Number of Nodes')
-    plt.title('Outgoing edges')
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.show()
 
 if __name__ == "__main__":
     filename = "wiki.dimacs"  # Change this to your DIMACS file
@@ -73,10 +57,5 @@ if __name__ == "__main__":
     G = readDIMACSFile(filename)
     node_weights = readWeightsFile(weights_filename)
 
-    # Visualize the graph with node sizes based on weights
+    # Visualize the graph
     visualizeGraph(G, node_weights, weights_filename)
-
-    # Create a histogram of out-degrees
-    createOutDegreeHistogram()
-
-    print("Graph visualized with node sizes based on weights, and an out-degree histogram using NetworkX and Matplotlib.")
