@@ -1,11 +1,11 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-my_list = []
-my_nums = []
+list = []
+nums = []
 # Function to read a DIMACS file and create a NetworkX graph
 def readDIMACSFile(filename):
-    global my_list
-    global my_nums
+    global list
+    global nums
     graph = nx.Graph()
     with open(filename, 'r') as file:
         for line in file:
@@ -54,8 +54,8 @@ def visualizeGraph(graph, node_weights, weights_filename):
 if __name__ == "__main__":
     filename = "wiki.dimacs"  # Change this to your DIMACS file
     weights_filename = "pagerank_wiki.dimacs"  # Change this to the separate weights file
-    G = readDIMACSFile(filename)
+    g = readDIMACSFile(filename)
     node_weights = readWeightsFile(weights_filename)
 
     # Visualize the graph
-    visualizeGraph(G, node_weights, weights_filename)
+    visualizeGraph(g, node_weights, weights_filename)
