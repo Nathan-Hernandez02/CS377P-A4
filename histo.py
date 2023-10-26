@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 list = []
 nums = []
 # Function to read a DIMACS file and create a NetworkX graph
-def readDIMACSFile(filename):
+def DIMACS_File(filename):
     global list
     global nums
     graph = nx.Graph()
@@ -24,7 +24,7 @@ def readDIMACSFile(filename):
     return graph
 
 # Function to read weights from a separate file
-def readWeightsFile(filename):
+def Weights_File(filename):
     node_weights = {}
     with open(filename, 'r') as file:
         for line in file:
@@ -32,11 +32,16 @@ def readWeightsFile(filename):
             node_weights[int(node)] = float(weight)
     return node_weights
 
-# Function to visualize the graph with node sizes based on weights
-def visualizeGraph(graph, node_weights, weights_filename):
-    pos = nx.random_layout(graph)
-    scaled_sizes = [50000 * node_weights[node] for node in graph.nodes]
-    node_colors = [node_weights[node]  for node in graph.nodes]
+
+if __name__ == "__main__":
+    filename = "wiki.dimacs"  # Change this to your DIMACS file
+    weights_filename = "pagerank_wiki.dimacs"  # Change this to the separate weights file
+    g = DIMACS_File(filename)
+    node_weights = Weights_File(weights_filename)
+
+    pos = nx.random_layout(g)
+    scaled_sizes = [50000 * node_weights[node] for node in g.nodes]
+    node_colors = [node_weights[node]  for node in g.nodes]
     node_labels = {}
     with open(weights_filename, "r") as file:
         for line in file:
@@ -44,18 +49,8 @@ def visualizeGraph(graph, node_weights, weights_filename):
             node_labels[int(node_id)] = label
 
     plt.figure(figsize=(10, 6))
-    nx.draw(graph, pos, node_size=scaled_sizes, with_labels=False, font_size=10, font_color='black', node_color=node_colors, edge_color='black')
-    nx.draw_networkx_labels(graph, pos, node_labels, font_size=10, font_color='black')
+    nx.draw(g, pos, node_size=scaled_sizes, with_labels=False, font_size=10, font_color='black', node_color=node_colors, edge_color='black')
+    nx.draw_networkx_labels(g, pos, node_labels, font_size=10, font_color='black')
 
     plt.title(f'Graph Visualization with Node Sizes Based on Weights')
     plt.show()
-
-
-if __name__ == "__main__":
-    filename = "wiki.dimacs"  # Change this to your DIMACS file
-    weights_filename = "pagerank_wiki.dimacs"  # Change this to the separate weights file
-    g = readDIMACSFile(filename)
-    node_weights = readWeightsFile(weights_filename)
-
-    # Visualize the graph
-    visualizeGraph(g, node_weights, weights_filename)
