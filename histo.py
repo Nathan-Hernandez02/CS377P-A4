@@ -19,7 +19,7 @@ def readDIMACSFile(filename):
                 my_nums = [i for i in range(int(numVertices))] 
             elif line.startswith('a'):
                 _, nodeA, nodeB, _ = line.split()
-                G.add_edge(int(nodeA), int(nodeB))
+                graph.add_edge(int(nodeA), int(nodeB))
                 my_list[int(nodeA) - 1] =  my_list[int(nodeA) - 1] + 1
     return graph
 
@@ -40,12 +40,12 @@ def visualizeGraph(graph, node_weights, weights_filename):
     node_labels = {}
     with open(weights_filename, "r") as file:
         for line in file:
-            node_id, label = line.strip().split()
+            _, node_id,_, label = line.strip().split()
             node_labels[int(node_id)] = label
 
     plt.figure(figsize=(10, 6))
     nx.draw(graph, pos, node_size=scaled_sizes, with_labels=False, font_size=10, font_color='black', node_color=node_colors, edge_color='black')
-    nx.draw_networkx_labels(G, pos, node_labels, font_size=10, font_color='black')
+    nx.draw_networkx_labels(graph, pos, node_labels, font_size=10, font_color='black')
 
     plt.title(f'Graph Visualization with Node Sizes Based on Weights')
     plt.show()
