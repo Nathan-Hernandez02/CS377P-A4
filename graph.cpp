@@ -6,12 +6,15 @@
 
 using namespace std;
 
-
+// This is the node structure, it stores the current nodes probability at index 0 and
+// the next nodes probability at index 1 
 struct node
     {
         double node_label[2];
     };
 
+// This is the structure for edges which stores the source and destination nodes
+// as well as the weight
 struct edge {
     int sourceNode;
     int destNode;
@@ -24,21 +27,24 @@ struct edge {
     }
 };
 
+// Overall this graph class will help us create the histogram for a pageranked dataset
 class graph {
     public:
         int nums_nodes; // total nodes
         int nums_edges; // total edges
         std::vector<edge> connect; // edge consists of source, destination, and weight
         struct node * graph_node;
-        int * rp;
-        int * ci;
-        int * ai;
+        int * rp; // row pointer
+        int * ci; // column indices
+        int * ai; // non zero entries
         bool is_allocated;
 
+    // this will set the indicator that rp, cp, and ai are allocated
     graph() {
         is_allocated = true;
     }
 
+    // this will deallocate rp, cp, ai, and all graph nodes
     ~graph() {
         if(is_allocated) {
             delete[] rp;
@@ -48,53 +54,68 @@ class graph {
         }
     }
 
-    void computeOutgoingEdgesHistogram(std::vector<int> &histogram)
+    // 
+    void createOutEdges(std::vector<int> &histo)
     {
-        // Initialize the histogram to all zeros
-        histogram.assign(nums_nodes, 0);
+        // This is where we initialize the histogram
+        histo.assign(nums_nodes, 0);
 
-        // Traverse the CSR representation and count outgoing edges for each node
-        for (int node = 0; node < nums_nodes; ++node)
+        // Looping through CSR data and calculating out edges for every node
+        for (int curNode = 0; curNode < nums_nodes; ++curNode)
         {
-            int start = rp[node];
-            int end = rp[node + 1];
-            int numOutgoingEdges = end - start;
-            histogram[node] = numOutgoingEdges;
+            int first = rp[curNode];
+            int last = rp[curNode + 1];
+            int OutEdges = last - first;
+            histo[curNode] = OutEdges;
         }
     }
 };
 
+// Handle arrays will take sorted edges and create the CSR format
 void handle_arrays(vector<edge> non_dups, graph *fin)
 {
-    int num_edges = non_dups.size();
+    // initializing total nodes and edges based on fin
     int num_nodes = fin->nums_nodes;
-
-    fin->graph_node = new node[num_nodes + 2];
-    fin->rp = new int[num_nodes + 2];
+    int num_edges = non_dups.size();
+    
+    // initializing column indices, row pointer, non zero entries, and graph nodes
     fin->ci = new int[num_edges + 2];
+    fin->rp = new int[num_nodes + 2];
     fin->ai = new int[num_edges + 2];
+    fin->graph_node = new node[num_nodes + 2];
 
-    fin->rp[0] = 1;
+    
     fin->ci[0] = 0;
+    fin->rp[0] = 1;
     fin->ai[0] = 0;
+
+    // we want to start at index one to keep consistency
     non_dups.insert(non_dups.begin(), edge(fin->rp[0], fin->ci[0], fin->ai[0]));
 
-    int cur_node = 0;
+    // helps us track the current edge and node
     int cur_edge = 1;
+    int cur_node = 0;
+
+    // iterating through the our edges
     while (cur_edge <= num_edges) {
         const edge &e = non_dups[cur_edge];
         
+        // this is for when there is a new row
+        // updates current node and row pointer
         if (e.sourceNode > cur_node) {
             cur_node++;
             fin->rp[cur_node] = cur_edge;
         }
-        else {
-            fin->ci[cur_edge] = e.destNode;
+        else { // else column indice and non zero entries updated
             fin->ai[cur_edge] = e.weight;
+            fin->ci[cur_edge] = e.destNode;
             cur_edge++;
         }
     }
-    for (int i = cur_node + 1; i <= num_nodes + 1; i++)
+
+    // after going through the edges we'll also update any row pointers
+    // that were not updated
+    for (int i = cur_node+1; i <= num_nodes+1; i++)
     {
         fin->rp[i] = num_edges + 1;
     }
@@ -102,6 +123,8 @@ void handle_arrays(vector<edge> non_dups, graph *fin)
     fin->ai[num_edges + 1] = 0;
 }
 
+// compare label will help in our compare operator to sort
+// source node and destination node in descending order
 bool compare_label(const edge &e1, const edge &e2)
 {
     if (e1.sourceNode != e2.sourceNode) {
@@ -110,13 +133,17 @@ bool compare_label(const edge &e1, const edge &e2)
     return e1.destNode < e2.destNode;
 }
 
+// handle dups will get rid of any edges that are exactly the same
+// and take into consideration maximum weights, getting rid of duplicates with smaller weights
 void handle_dups(graph *fin) {
     std::vector<edge> &edges = fin->connect;
     std::sort(edges.begin(), edges.end(), compare_label);
 
+    // non dups stores edges with no duplicates
     std::vector<edge> non_dups;
     edge current_edge = edges[0];
 
+    // go through all edges in fin, and only consider duplicate with maximum weight
     for (int i = 1; i < edges.size(); i++) {
         const edge &next_edge = edges[i];
 
@@ -131,10 +158,13 @@ void handle_dups(graph *fin) {
 
     non_dups.push_back(current_edge);
     fin->connect = non_dups;
-
+    
+    // now we need to create our CSR graph format
     handle_arrays(non_dups, fin);
 }
 
+// this file will allow us to iterate through the dimacs data set
+// store the data as edges (source node, destination node, and weight)
 void read_file(string choice, graph *fin) {
     ifstream file(choice);
     if (file.is_open())
@@ -142,11 +172,12 @@ void read_file(string choice, graph *fin) {
         string curline;
         while (getline(file, curline))
         {
+            // the first line should only be the total nodes and edges
             if (curline[0] == 'p')
             {
                 sscanf(curline.c_str(), "p sp %d %d", &fin->nums_nodes, &fin->nums_edges);
             }
-            else if (curline[0] == 'a')
+            else if (curline[0] == 'a') // else it will be an edge with a source, destination, and weight format
             {
                 int sourceNode, destNode, weight;
                 sscanf(curline.c_str(), "a %d %d %d", &sourceNode, &destNode, &weight);
@@ -159,9 +190,10 @@ void read_file(string choice, graph *fin) {
     }
 }
 
+// this method will help us determine if the page rank is stable and converges
 bool converged(graph *g)
 {
-    double con = 1.0e-4;
+    double con = 1.0e-4; // threshold for page rank, stopping point
     for (int n = 1; n <= g->nums_nodes; n++)
     {
         const double cur = g->graph_node[n].node_label[0];
@@ -175,7 +207,7 @@ bool converged(graph *g)
     return true;
 }
 
-
+// method to perform page rank and scales to 1
 void pagerank(graph *g)
 {
     double damp = 0.85;
@@ -187,6 +219,7 @@ void pagerank(graph *g)
 
     bool convergence = false;
 
+    // performs page ranking algorithm until it converges
     while (!convergence) {
         
         for (int n = 1; n <= num_nodes; n++) {
@@ -195,6 +228,7 @@ void pagerank(graph *g)
 
         for (int n = 1; n <= num_nodes; n++) {
             int out_degree = g->rp[n + 1] - g->rp[n];
+            // equation to do page rank
             double equation = damp * g->graph_node[n].node_label[0] / (double)out_degree;
             for (int e = g->rp[n]; e < g->rp[n + 1]; e++) {
                 int dst = g->ci[e];
@@ -208,6 +242,7 @@ void pagerank(graph *g)
         }
     }
 
+    // ensures it sums to 1
     double sum = 0.0;
     int nodes = g->nums_nodes;
     for (int n = 1; n <= nodes; n++) {
@@ -219,6 +254,7 @@ void pagerank(graph *g)
     }
 }
 
+// this method compares two pairs of probabilities of the nodes
 bool compare_pair(const std::pair<int, double> &v1, const std::pair<int, double> &v2)
 {
     if (v1.second > v2.second)
@@ -232,6 +268,7 @@ bool compare_pair(const std::pair<int, double> &v1, const std::pair<int, double>
     return false;
 }
 
+// this will create pairs out of the page ranks
 std::vector<std::pair<int, double>> pair_sort(graph *graph)
 {
     std::vector<std::pair<int, double>> pairs;
@@ -241,11 +278,13 @@ std::vector<std::pair<int, double>> pair_sort(graph *graph)
         pairs.push_back(std::make_pair(i, graph->graph_node[i].node_label[0]));
     }
 
+    // sorts based on the probability of the nodes
     std::sort(pairs.begin(), pairs.end(), compare_pair);
 
     return pairs;
 }
 
+// this outputs to a file the page ranks
 void print_pairs(std::vector<std::pair<int, double>> &pairs, string out)
 {
     ofstream out_stream(out);
@@ -255,6 +294,7 @@ void print_pairs(std::vector<std::pair<int, double>> &pairs, string out)
     }
 }
 
+// this will print out the histogram to a file
 void print_histo(std::vector<int> outgoingEdgesHistogram, string out, graph * g)
 {
     ofstream outstream(out);
@@ -264,20 +304,20 @@ void print_histo(std::vector<int> outgoingEdgesHistogram, string out, graph * g)
     }
 }
 
-void writeGraphToDIMACS(graph * g, const string &fileName){
-    ofstream outFile(fileName);
+// graph to DIMACS
+void graphToDIMACS(graph * graph, const string &file){
+    ofstream outFile(file);
 
     if (!outFile.is_open())
     {
-        cerr << "Error: Unable to open the output file." << endl;
+        cerr << "Error: Couldn't open file." << endl;
         return;
     }
 
-    outFile << "p sp " << g->nums_nodes << " " << g->nums_edges << endl;
-
-    for (const edge &e : g->connect)
+    outFile << "p sp " << graph->nums_nodes << " " << graph->nums_edges << endl;
+    for (const edge &edge : graph->connect)
     {
-        outFile << "a " << e.sourceNode << " " << e.destNode << " " << e.weight << endl;
+        outFile << "a " << edge.sourceNode << " " << edge.destNode << " " << edge.weight << endl;
     }
 
     outFile.close();
@@ -307,23 +347,20 @@ int main (int argc, char* argv[]) {
     //     }
     // routine 1B:  a graph in CSR representation in memory and prints it out to a file in DIMACS format.
     string output_file = "CSR_DIMACS_" + input_file;
-    writeGraphToDIMACS(g, output_file);
+    graphToDIMACS(g, output_file);
 
-    // string out = "CSR_Nodes_" + input_file;
-    // // Routine 1C: Graph in CSR representation in memory, and prints node numbers and node labels
-    // writeNodesToFile(g, out);
 
     // routine 2A: Write a push-style page-rank algorithm that operates on a graph stored in CSR format in memory
     pagerank(g);
 
     string output = "pagerank_" + input_file;
-    // //1C but for pagerank.
+    // //1C but for pagerank
     std::vector<std::pair<int, double>> pairs_pagerank = pair_sort(g);
     print_pairs(pairs_pagerank, output);
 
     std::vector<int> outgoingEdgesHistogram;
     output = "histo_" + input_file + ".txt";
-    g->computeOutgoingEdgesHistogram(outgoingEdgesHistogram);
+    g->createOutEdges(outgoingEdgesHistogram);
 
     print_histo(outgoingEdgesHistogram, output, g);
 
